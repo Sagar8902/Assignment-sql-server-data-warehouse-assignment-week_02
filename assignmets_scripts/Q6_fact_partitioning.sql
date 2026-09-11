@@ -62,15 +62,24 @@ WHERE passenger_key = 100
 ORDER BY date_key;
 
 
-## Test 1: Filter on Partition Key
+## Partitioning & Execution Plan
 
-![Partition pruning using date_key](/docs/WITH_PARTITION_KEY.sqlplan)
+### Test 1: Filter on Partition Key
 
-## Test 2: Filter on Non-Partition Column
+The query filters on `date_key`, which is the partition key.
+SQL Server can eliminate irrelevant partitions through partition pruning.
 
-![No partition pruning using passenger_key](/docs/WITHOUT_PARTITION_KEY.sqlplan)
+[View Execution Plan - Partition Key](docs/WITH_PARTITION_KEY.sqlplan)
 
 
-## Before & After Partitioning Comparison
+### Test 2: Filter on Non-Partition Column
 
-![Before & After Partitioning Comparison](/docs/ACTUAL_EXECUTION_PLAN (PARTITION_KEY).png)
+The query filters on `passenger_key`, which is not the partition key.
+Therefore, the filter cannot be used to eliminate partitions.
+
+[View Execution Plan - Non-Partition Key](docs/WITHOUT_PARTITION_KEY.sqlplan)
+
+
+### Before & After Partitioning Comparison
+
+[![Before & After Partitioning Comparison](docs/ACTUAL_EXECUTION_PLAN_PARTITION_KEY.png)](docs/ACTUAL_EXECUTION_PLAN_PARTITION_KEY.png)
