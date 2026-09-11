@@ -64,8 +64,8 @@ ORDER BY date_key;
 
 ## Partitioning & Execution Plan
 
-[View Execution Plan - Partition Key](docs/execution_plans/WITH_PARTITION_KEY.sqlplan)
+[View Execution Plan - Partition Key](docs/execution_plans/WITH_PARTITION_KEY.png)
 
-[View Execution Plan - Non-Partition Key](docs/execution_plans/WITHOUT_PARTITION_KEY.sqlplan)
+[View Execution Plan - Non-Partition Key](docs/execution_plans/WITHOUT_PARTITION_KEY.png)
 
-[![Before & After Partitioning](docs/screenshots/ACTUAL_EXECUTION_PLAN_PARTITION_KEY.png)](docs/screenshots/ACTUAL_EXECUTION_PLAN_PARTITION_KEY.png)
+[![Before & After Partitioning](docs/screenshots/ACTUAL_EXECUTION_PLAN_PARTITION_KEY.png)](docs/ACTUAL_EXECUTION_PLAN (PARTITION_KEY).png)
