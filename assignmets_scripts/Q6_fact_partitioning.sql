@@ -64,8 +64,13 @@ ORDER BY date_key;
 
 ## Test 1: Filter on Partition Key
 
-![Partition pruning using date_key](../docs/partition_pruning_date_key.png)
+![Partition pruning using date_key](/docs/WITH_PARTITION_KEY.sqlplan)
 
 ## Test 2: Filter on Non-Partition Column
 
-![No partition pruning using passenger_key](../docs/partition_pruning_passenger_key.png)
+![No partition pruning using passenger_key](/docs/WITHOUT_PARTITION_KEY.sqlplan)
+
+
+## Before & After Partitioning Comparison
+
+![Before & After Partitioning Comparison](/docs/ACTUAL_EXECUTION_PLAN (PARTITION_KEY).png)
