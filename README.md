@@ -276,13 +276,13 @@ WHERE passenger_key = 100;
 
 The query uses `date_key`, which is the partition key.
 
-[View Execution Plan - Partition Key](docs/execution_plans/WITH_PARTITION_KEY.sqlplan)
+[View Execution Plan - Partition Key](docs/WITH_PARTITION_KEY.sqlplan)
 
 ### Test 2 — Filter on Non-Partition Column
 
 The query uses `passenger_key`, which is not the partition key.
 
-[View Execution Plan - Non-Partition Key](docs/execution_plans/WITHOUT_PARTITION_KEY.sqlplan)
+[View Execution Plan - Non-Partition Key](docs/WITHOUT_PARTITION_KEY.sqlplan)
 
 ### Execution Plan Screenshot
 
@@ -290,7 +290,7 @@ The query uses `passenger_key`, which is not the partition key.
 >
 > `docs/screenshots/actual_execution_plan.png`
 
-[![Actual Execution Plan](docs/screenshots/actual_execution_plan.png)](docs/screenshots/actual_execution_plan.png)
+[![Actual Execution Plan](docs/ACTUAL_EXECUTION_PLAN (PARTITION_KEY).png)
 
 ---
 
