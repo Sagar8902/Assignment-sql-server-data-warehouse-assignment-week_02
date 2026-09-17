@@ -7,7 +7,7 @@
       Load dimension and fact tables from the Bronze layer.
 
   Process:
-      1. Truncate existing DW tables.
+      1. DELETE existing DW tables.
       2. Load dimension tables from bronze_* tables.
       3. Generate DateKey in YYYYMMDD format.
       4. Load FactTicketSales using surrogate keys from dimensions.
@@ -18,7 +18,7 @@
 -- LOAD DIM_AIRCRAFT
 -- ============================================================================
 
-TRUNCATE TABLE dw.dim_aircraft;
+DELETE FROM dw.dim_aircraft;
 
 INSERT INTO dw.dim_aircraft
 (
@@ -42,7 +42,7 @@ FROM dw.dim_aircraft;
 -- LOAD DIM_AIRPORT
 -- ============================================================================
 
-TRUNCATE TABLE dw.dim_airport;
+DELETE FROM dw.dim_airport;
 
 INSERT INTO dw.dim_airport
 (
@@ -66,7 +66,7 @@ FROM dw.dim_airport;
 -- LOAD DIM_CITY
 -- ============================================================================
 
-TRUNCATE TABLE dw.dim_city;
+DELETE FROM dw.dim_city;
 
 INSERT INTO dw.dim_city
 (
@@ -90,7 +90,7 @@ FROM dw.dim_city;
 -- LOAD DIM_COUNTRY
 -- ============================================================================
 
-TRUNCATE TABLE dw.dim_country;
+DELETE FROM dw.dim_country;
 
 INSERT INTO dw.dim_country
 (
@@ -111,7 +111,7 @@ FROM dw.dim_country;
 -- LOAD DIM_FLIGHT
 -- ============================================================================
 
-TRUNCATE TABLE dw.dim_flight;
+DELETE FROM dw.dim_flight;
 
 INSERT INTO dw.dim_flight
 (
@@ -139,7 +139,7 @@ FROM dw.dim_flight;
 -- LOAD DIM_PASSENGER
 -- ============================================================================
 
-TRUNCATE TABLE dw.dim_passenger;
+DELETE FROM dw.dim_passenger;
 
 INSERT INTO dw.dim_passenger
 (
@@ -173,7 +173,7 @@ FROM dw.dim_passenger;
 -- DateKey is generated in YYYYMMDD integer format.
 -- Example: 2026-01-03 → 20260103
 
-TRUNCATE TABLE dw.dim_date;
+DELETE FROM dw.dim_date;
 
 INSERT INTO dw.dim_date
 (
@@ -185,14 +185,24 @@ INSERT INTO dw.dim_date
     quarter
 )
 SELECT DISTINCT
-    CONVERT(INT, CONVERT(VARCHAR(8), booking_date, 112)) AS date_key,
-    booking_date AS full_date,
-    DAY(booking_date) AS day,
-    MONTH(booking_date) AS month,
-    YEAR(booking_date) AS year,
-    DATEPART(QUARTER, booking_date) AS quarter
-FROM dbo.bronze_bookings
-WHERE booking_date IS NOT NULL;
+    CONVERT(INT, CONVERT(VARCHAR(8), d.full_date, 112)),
+    d.full_date,
+    DAY(d.full_date),
+    MONTH(d.full_date),
+    YEAR(d.full_date),
+    DATEPART(QUARTER, d.full_date)
+FROM
+(
+    SELECT booking_date AS full_date
+    FROM dbo.bronze_bookings
+    WHERE booking_date IS NOT NULL
+
+    UNION
+
+    SELECT travel_date AS full_date
+    FROM dbo.bronze_bookings
+    WHERE travel_date IS NOT NULL
+) AS d;
 
 SELECT *
 FROM dw.dim_date;
@@ -204,34 +214,50 @@ FROM dw.dim_date;
 -- Fact is populated by joining Bronze bookings to dimensions
 -- using business keys and retrieving the corresponding surrogate keys.
 
-TRUNCATE TABLE dw.fact_ticket_sales;
+DELETE FROM dw.fact_ticket_sales;
 
 INSERT INTO dw.fact_ticket_sales
 (
     booking_id,
     passenger_key,
-    date_key,
+    booking_date_key,
+    travel_date_key,
     flight_key,
-    airport_key,
+
+    origin_airport_key,
+    destination_airport_key,
+
     aircraft_key,
+
+    fare_class,
+    booking_status,
+
     fare_amount,
     tax_amount,
     miles_earned
 )
 SELECT
     b.booking_id,
+
     p.passenger_key,
-    d.date_key,
+
+    booking_date.date_key,
+    travel_date.date_key,
+
     f.flight_key,
-    a.airport_key,
+
+    origin.airport_key,
+    destination.airport_key,
+
     ac.aircraft_key,
+
+    b.fare_class,
+    b.booking_status,
+
     b.fare_amount,
     b.tax_amount,
     b.miles_earned
 FROM dbo.bronze_bookings AS b
-
-LEFT JOIN dw.dim_date AS d
-    ON b.booking_date = d.full_date
 
 LEFT JOIN dw.dim_flight AS f
     ON b.flight_id = f.flight_id
@@ -242,8 +268,17 @@ LEFT JOIN dw.dim_passenger AS p
 LEFT JOIN dw.dim_aircraft AS ac
     ON f.aircraft_code = ac.aircraft_code
 
-LEFT JOIN dw.dim_airport AS a
-    ON p.home_airport_code = a.airport_code;
+LEFT JOIN dw.dim_airport AS origin
+    ON f.origin_airport_code = origin.airport_code
+
+LEFT JOIN dw.dim_airport AS destination
+    ON f.dest_airport_code = destination.airport_code
+
+LEFT JOIN dw.dim_date AS booking_date
+    ON b.booking_date = booking_date.full_date
+
+LEFT JOIN dw.dim_date AS travel_date
+    ON b.travel_date = travel_date.full_date;
 
 
 -- ============================================================================
