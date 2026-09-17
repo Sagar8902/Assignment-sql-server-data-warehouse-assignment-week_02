@@ -19,6 +19,8 @@
 -- ============================================================================
 -- passenger_key = surrogate key
 -- passenger_id  = stable business key
+DROP TABLE IF EXISTS dw.dim_passenger;
+GO
 
 CREATE TABLE dw.dim_passenger
 (
@@ -40,6 +42,7 @@ CREATE TABLE dw.dim_passenger
 -- INITIAL LOAD
 -- ============================================================================
 -- Load the initial passenger version as the current record.
+DELETE FROM dw.dim_passenger;
 
 INSERT INTO dw.dim_passenger
 (
