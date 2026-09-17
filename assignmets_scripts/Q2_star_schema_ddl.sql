@@ -23,6 +23,8 @@ CREATE SCHEMA dw;
 -- DATE DIMENSION
 -- ============================================================================
 -- Stores calendar information used for filtering and time-based analysis.
+DROP TABLE IF EXISTS dw.dim_date;
+GO
 
 CREATE TABLE dw.dim_date
 (
@@ -41,6 +43,8 @@ CREATE TABLE dw.dim_date
 -- Stores aircraft details.
 -- aircraft_key = surrogate key
 -- aircraft_code = business key from the source system
+DROP TABLE IF EXISTS dw.dim_aircraft;
+GO
 
 CREATE TABLE dw.dim_aircraft
 (
@@ -58,6 +62,8 @@ CREATE TABLE dw.dim_aircraft
 -- Stores flight-related descriptive information.
 -- flight_key = surrogate key
 -- flight_id = business key from the source system
+DROP TABLE IF EXISTS dw.dim_flight;
+GO
 
 CREATE TABLE dw.dim_flight
 (
@@ -70,17 +76,14 @@ CREATE TABLE dw.dim_flight
     flight_date DATE
 );
 
-EXEC sp_rename 
-    'dw.dim_flight.airport_code',
-    'aircraft_code',
-    'COLUMN';
-
 -- ============================================================================
 -- PASSENGER DIMENSION
 -- ============================================================================
 -- Stores passenger-related descriptive information.
 -- passenger_key = surrogate key
 -- passenger_id = business key from the source system
+DROP TABLE IF EXISTS dw.dim_passenger;
+GO
 
 CREATE TABLE dw.dim_passenger
 (
@@ -89,13 +92,11 @@ CREATE TABLE dw.dim_passenger
     passenger_name VARCHAR(50),
     home_airport_code VARCHAR(3),
     frequent_flyer_tier VARCHAR(10),
-    signup_date DATE
+    signup_date DATE,
+    is_current INT,
+    effective_from DATE,
+    effective_to DATE
 );
-
-EXEC sp_rename 
-    'dw.dim_passenger.passenger_number',
-    'passenger_name',
-    'COLUMN';
 
 
 -- ============================================================================
@@ -106,6 +107,8 @@ EXEC sp_rename
 --
 -- Dimension keys are stored as foreign keys.
 -- Measures are additive and can be aggregated across fact rows.
+DROP TABLE IF EXISTS dw.fact_ticket_sales;
+GO
 
 CREATE TABLE dw.fact_ticket_sales
 (
@@ -113,13 +116,19 @@ CREATE TABLE dw.fact_ticket_sales
 
     -- Business/transaction identifier
     booking_id INT NOT NULL,
+    booking_date_key INT,
+    travel_date_key INT,
 
-    -- Foreign keys to dimension tables
-    date_key INT,
     passenger_key INT,
     flight_key INT,
-    airport_key INT,
+
+    origin_airport_key INT,
+    destination_airport_key INT,
+
     aircraft_key INT,
+
+    fare_class VARCHAR(50),
+    booking_status VARCHAR(50),
 
     -- Additive measures
     fare_amount DECIMAL(18,2),
@@ -127,7 +136,7 @@ CREATE TABLE dw.fact_ticket_sales
     miles_earned INT,
 
     -- Foreign key relationships
-    FOREIGN KEY (date_key)
+    FOREIGN KEY (travel_date_key)
         REFERENCES dw.dim_date(date_key),
 
     FOREIGN KEY (passenger_key)
@@ -136,63 +145,13 @@ CREATE TABLE dw.fact_ticket_sales
     FOREIGN KEY (flight_key)
         REFERENCES dw.dim_flight(flight_key),
 
-    FOREIGN KEY (airport_key)
+    FOREIGN KEY (aircraft_key)
+        REFERENCES dw.dim_aircraft(aircraft_key),
+
+    FOREIGN KEY (origin_airport_key)
         REFERENCES dw.dim_airport(airport_key),
 
-    FOREIGN KEY (aircraft_key)
-        REFERENCES dw.dim_aircraft(aircraft_key)
+    FOREIGN KEY (destination_airport_key)
+        REFERENCES dw.dim_airport(airport_key)
 );
 
-
--- ============================================================================
--- NORMALIZED AIRPORT DIMENSION
--- ============================================================================
--- Stores country details.
--- country_key = surrogate key
--- country_name = business key from the source system
-
-CREATE TABLE dw.dim_country
-(
-    country_key INT IDENTITY(1,1) PRIMARY KEY,
-    country_name VARCHAR(50) NOT NULL,
-    region VARCHAR(50)
-);
-
-
--- ============================================================================
--- NORMALIZED AIRPORT DIMENSION
--- ============================================================================
--- Stores city details.
--- city_key = surrogate key
--- city_name = business key from the source system
-
-CREATE TABLE dw.dim_city
-(
-    city_key INT IDENTITY(1,1) PRIMARY KEY,
-    city_name VARCHAR(50) NOT NULL,
-    country_key INT NOT NULL,
-
- -- Foreign key relationships
-
-    FOREIGN KEY (country_key)
-        REFERENCES dw.dim_country(country_key)
-);
-
-
--- ============================================================================
--- NORMILIZED AIRPORT DIMENSION
--- ============================================================================
--- Stores airport details.
--- airport_key = surrogate key
--- airport_code = business key from the source system
-
-CREATE TABLE dw.dim_airport
-(
-    airport_key INT IDENTITY(1,1) PRIMARY KEY,
-    airport_code VARCHAR(3) NOT NULL,
-    airport_name VARCHAR(50),
-    city_key INT NOT NULL,
-
-      FOREIGN KEY (city_key)
-        REFERENCES dw.dim_city(city_key)
-);
